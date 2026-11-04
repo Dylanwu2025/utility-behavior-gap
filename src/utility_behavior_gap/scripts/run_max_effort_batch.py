@@ -11,7 +11,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from utility_behavior_gap.constants import ACTORS
+from utility_behavior_gap.constants import ACTORS, REGISTERED_ACTORS
 from utility_behavior_gap.fingerprints import output_text_fingerprint
 from utility_behavior_gap.io_utils import read_jsonl
 from utility_behavior_gap.job_builder import build_generation_jobs
@@ -320,7 +320,7 @@ def main() -> None:
     args = parser.parse_args()
 
     actors = parse_actors(args.actors) or list(ACTORS)
-    unknown = sorted(set(actors) - set(ACTORS))
+    unknown = sorted(set(actors) - set(REGISTERED_ACTORS))
     if unknown:
         raise ValueError(f"unknown actor ids: {', '.join(unknown)}")
 

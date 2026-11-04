@@ -101,13 +101,19 @@ def sample_tercile_pairs(
     return rows
 
 
-def default_pairs(options: list[dict[str, str]], pairs_per_cell: int, seed: int) -> list[dict[str, Any]]:
+def default_pairs(
+    options: list[dict[str, str]],
+    pairs_per_cell: int,
+    seed: int,
+    *,
+    actors: list[str] | None = None,
+) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     by_cell: dict[tuple[str, str], list[dict[str, str]]] = defaultdict(list)
     for option in options:
         by_cell[(option["actor"], option["domain"])].append(option)
 
-    for actor in ACTORS:
+    for actor in ACTORS if actors is None else actors:
         for domain in DOMAINS:
             pairs = sample_tercile_pairs(
                 by_cell[(actor, domain)],
@@ -120,13 +126,19 @@ def default_pairs(options: list[dict[str, str]], pairs_per_cell: int, seed: int)
     return rows
 
 
-def same_count_pairs(options: list[dict[str, str]], pairs_per_cell: int, seed: int) -> list[dict[str, Any]]:
+def same_count_pairs(
+    options: list[dict[str, str]],
+    pairs_per_cell: int,
+    seed: int,
+    *,
+    actors: list[str] | None = None,
+) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     by_cell: dict[tuple[str, str], list[dict[str, str]]] = defaultdict(list)
     for option in options:
         by_cell[(option["actor"], option["domain"])].append(option)
 
-    for actor in ACTORS:
+    for actor in ACTORS if actors is None else actors:
         for domain in ["religions", "animals", "countries"]:
             pairs = sample_tercile_pairs(
                 by_cell[(actor, domain)],
@@ -245,10 +257,11 @@ def select_pairs(
     default_pairs_per_cell: int = 80,
     same_count_pairs_per_cell: int = 80,
     seed: int = 42,
+    actors: list[str] | None = None,
 ) -> list[dict[str, Any]]:
     options = utility_options_with_actor_overlays()
-    rows = default_pairs(options, default_pairs_per_cell, seed)
-    rows.extend(same_count_pairs(options, same_count_pairs_per_cell, seed))
+    rows = default_pairs(options, default_pairs_per_cell, seed, actors=actors)
+    rows.extend(same_count_pairs(options, same_count_pairs_per_cell, seed, actors=actors))
     return rows
 
 
@@ -264,3 +277,26 @@ def write_selected_pairs(
         seed=seed,
     )
     write_csv_rows(OUTPUT_INPUTS / "selected_pairs.csv", rows)
+
+
+def selected_pairs_with_actor_overlays() -> list[dict[str, str]]:
+    path = OUTPUT_INPUTS / "selected_pairs.csv"
+    if not path.exists():
+        raise FileNotFoundError("Run `python -m utility_behavior_gap.scripts.select_pairs` first.")
+    rows = read_csv_rows(path)
+    overlays: dict[str, list[dict[str, str]]] = {}
+    for overlay_path in sorted(OUTPUT_INPUTS.glob("selected_pairs__*.csv")):
+        overlay_rows = read_csv_rows(overlay_path)
+        actors = {row["actor"] for row in overlay_rows}
+        if len(actors) != 1:
+            raise ValueError(f"expected exactly one actor in {overlay_path}, found {sorted(actors)}")
+        actor = next(iter(actors))
+        if actor in overlays:
+            raise ValueError(f"duplicate selected-pair overlay for {actor}")
+        overlays[actor] = overlay_rows
+    if not overlays:
+        return rows
+    merged = [row for row in rows if row["actor"] not in overlays]
+    for actor in sorted(overlays):
+        merged.extend(overlays[actor])
+    return merged

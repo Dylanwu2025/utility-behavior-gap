@@ -8,6 +8,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 INPUTS = ROOT / "data" / "inputs"
+FOLLOWUP = ROOT / "followup"
+FOLLOWUP_INPUTS = FOLLOWUP / "inputs"
 OUTPUTS = Path(os.environ.get("UTILITY_BEHAVIOR_GAP_OUTPUTS", ROOT / "outputs"))
 ANALYSIS_SPECS = ROOT / "analysis_specs"
 OUTPUT_INPUTS = OUTPUTS / "inputs"

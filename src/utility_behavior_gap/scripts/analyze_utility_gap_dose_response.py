@@ -33,7 +33,7 @@ import pandas as pd
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
 
-from utility_behavior_gap.constants import ACTORS
+from utility_behavior_gap.constants import REGISTERED_ACTORS
 from utility_behavior_gap.io_utils import read_csv_rows, write_csv_rows
 from utility_behavior_gap.paths import ANALYSIS, FIGURES, OUTPUT_RAW
 
@@ -544,7 +544,7 @@ def main() -> None:
     actors = parse_csv_arg(args.actors)
     tasks = parse_csv_arg(args.tasks)
     domains = parse_csv_arg(args.domains)
-    unknown_actors = sorted(actors - set(ACTORS)) if actors else []
+    unknown_actors = sorted(actors - set(REGISTERED_ACTORS)) if actors else []
     if unknown_actors:
         raise ValueError(f"unknown actor ids: {', '.join(unknown_actors)}")
 

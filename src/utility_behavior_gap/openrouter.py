@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gzip
 import json
 import http.client
 import os
@@ -54,7 +55,7 @@ def configured_actor_models() -> dict[str, str]:
 
 
 class OpenRouterClient:
-    def __init__(self, *, timeout_s: float = 120.0, max_retries: int = 3) -> None:
+    def __init__(self, *, timeout_s: float = 240.0, max_retries: int = 3) -> None:
         load_runtime_env()
         self.api_key = require_openrouter_key()
         self.base_url = os.environ.get("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1").rstrip("/")
@@ -103,7 +104,13 @@ class OpenRouterClient:
         for attempt in range(1, self.max_retries + 1):
             try:
                 with urllib.request.urlopen(request, timeout=self.timeout_s) as response:
-                    raw_body = response.read().decode("utf-8", errors="replace")
+                    raw_bytes = response.read()
+                if raw_bytes[:2] == b"\x1f\x8b":
+                    try:
+                        raw_bytes = gzip.decompress(raw_bytes)
+                    except OSError:
+                        pass
+                raw_body = raw_bytes.decode("utf-8", errors="replace")
                 return json.loads(raw_body)
             except json.JSONDecodeError as exc:
                 # Non-JSON / truncated body (provider hiccup) — retry, then surface as transient.
@@ -112,7 +119,13 @@ class OpenRouterClient:
                         f"OpenRouter request failed: malformed non-JSON response (temporary): {raw_body[:300]!r}"
                     ) from exc
             except urllib.error.HTTPError as exc:
-                detail = exc.read().decode("utf-8", errors="replace")
+                raw_bytes = exc.read()
+                if raw_bytes[:2] == b"\x1f\x8b":
+                    try:
+                        raw_bytes = gzip.decompress(raw_bytes)
+                    except OSError:
+                        pass
+                detail = raw_bytes.decode("utf-8", errors="replace")
                 if attempt == self.max_retries or exc.code < 500:
                     raise RuntimeError(f"OpenRouter request failed ({exc.code}): {detail}") from exc
             except urllib.error.URLError as exc:

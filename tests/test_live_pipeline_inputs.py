@@ -2,7 +2,15 @@ from collections import Counter
 
 import pytest
 
-from utility_behavior_gap.constants import ACTOR_MODEL_ID, ACTORS, JUDGE_MODEL_IDS
+from utility_behavior_gap.constants import (
+    ACTOR_LABEL,
+    ACTOR_MODEL_ID,
+    ACTORS,
+    EXPANSION_ACTORS,
+    JUDGE_MODEL_IDS,
+    OPEN_WEIGHT_ACTORS,
+    REGISTERED_ACTORS,
+)
 from utility_behavior_gap.job_builder import build_generation_jobs, direct_outcome_text
 from utility_behavior_gap.openrouter import actor_model_id, judge_model_ids, require_openrouter_key
 from utility_behavior_gap.pair_selection import select_pairs
@@ -52,6 +60,34 @@ def test_openrouter_model_ids_are_versioned_public_constants():
     assert all(actor_model_id(actor) == ACTOR_MODEL_ID[actor] for actor in ACTORS)
     assert actor_model_id("mimo-v25-pro-or") == "xiaomi/mimo-v2.5-pro"
     assert judge_model_ids() == JUDGE_MODEL_IDS
+
+
+def test_expansion_actors_are_registered_outside_the_paper_roster():
+    assert REGISTERED_ACTORS == [*ACTORS, *EXPANSION_ACTORS, *OPEN_WEIGHT_ACTORS]
+    assert set(EXPANSION_ACTORS).isdisjoint(ACTORS)
+    assert set(OPEN_WEIGHT_ACTORS).isdisjoint(ACTORS)
+    assert set(OPEN_WEIGHT_ACTORS).isdisjoint(EXPANSION_ACTORS)
+    assert set(EXPANSION_ACTORS) <= set(ACTOR_LABEL)
+    assert set(OPEN_WEIGHT_ACTORS) <= set(ACTOR_LABEL)
+    assert set(OPEN_WEIGHT_ACTORS) <= set(ACTOR_MODEL_ID)
+    assert actor_model_id("claude-opus-5.5-or") == "anthropic/claude-opus-5.5"
+    assert actor_model_id("gpt-5.4-or") == "openai/gpt-5.4"
+    assert actor_model_id("mistral-large-4-or") == "mistralai/mistral-large-4-0"
+    assert actor_model_id("mimo-v26-pro-or") == "xiaomi/mimo-v2.6-pro"
+    assert actor_model_id("glm-5.3-or") == "z-ai/glm-5.3"
+    assert actor_model_id("kimi-k3-or") == "moonshotai/kimi-k3"
+    assert actor_model_id("glm-5.3-flash-or") == "z-ai/glm-5.3-flash"
+    assert actor_model_id("qwen3.8-2.4t-a95b-or") == "qwen/qwen3.8-2.4t-a95b"
+    assert actor_model_id("deepseek-v4.1-flash-or") == "deepseek/deepseek-v4.1-flash"
+    assert actor_model_id("mimo-v26-flash-or") == "xiaomi/mimo-v2.6-flash"
+    assert actor_model_id("qwen3.8-27b-or") == "qwen/qwen3.8-27b"
+    assert actor_model_id("qwen3.8-flash-or") == "qwen/qwen3.8-flash"
+    assert actor_model_id("ling-3.1-flash-or") == "inclusionai/ling-3.1-flash"
+    assert select_pairs(
+        default_pairs_per_cell=1,
+        same_count_pairs_per_cell=1,
+        actors=list(EXPANSION_ACTORS) + list(OPEN_WEIGHT_ACTORS),
+    ) == []
 
 
 def test_highlow_intervention_essay_jobs_use_rewritten_consequences():

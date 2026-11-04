@@ -7,7 +7,7 @@ import argparse
 import subprocess
 import sys
 
-from utility_behavior_gap.constants import ACTORS
+from utility_behavior_gap.constants import ACTORS, REGISTERED_ACTORS
 from utility_behavior_gap.paths import ROOT
 
 
@@ -96,7 +96,7 @@ def main() -> None:
     tasks = parse_csv(args.tasks) or list(DEFAULT_TASKS)
     actors = parse_csv(args.actors) or list(ACTORS)
     unknown_tasks = sorted(set(tasks) - set(DEFAULT_TASKS))
-    unknown_actors = sorted(set(actors) - set(ACTORS))
+    unknown_actors = sorted(set(actors) - set(REGISTERED_ACTORS))
     if unknown_tasks:
         raise ValueError(f"unknown direct-instruction task ids: {', '.join(unknown_tasks)}")
     if unknown_actors:

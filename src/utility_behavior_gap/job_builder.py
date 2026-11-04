@@ -14,7 +14,7 @@ from typing import Any
 from utility_behavior_gap.constants import ACTOR_LABEL, ACTORS, DOMAIN_LABEL, TASK_LABEL
 from utility_behavior_gap.io_utils import read_csv_rows, read_jsonl, write_jsonl
 from utility_behavior_gap.paths import INPUTS, OUTPUT_API, OUTPUT_INPUTS, ROOT
-from utility_behavior_gap.pair_selection import gap_stratified_pairs_for_actor
+from utility_behavior_gap.pair_selection import gap_stratified_pairs_for_actor, selected_pairs_with_actor_overlays
 from utility_behavior_gap.prompts import (
     BLINDING_NON_ESSAY,
     COMPETITION_STRONG_SYSTEM_PROMPTS,
@@ -304,10 +304,7 @@ def read_essay_direct_trials(data_dir: Path = ROOT / "essay_all_conditions" / "d
 
 
 def read_selected_pairs() -> list[dict[str, str]]:
-    path = OUTPUT_INPUTS / "selected_pairs.csv"
-    if not path.exists():
-        raise FileNotFoundError("Run `python -m utility_behavior_gap.scripts.select_pairs` first.")
-    return read_csv_rows(path)
+    return selected_pairs_with_actor_overlays()
 
 
 def limited_by_group(rows: list[dict[str, str]], key_fields: tuple[str, ...], limit: int | None) -> list[dict[str, str]]:
